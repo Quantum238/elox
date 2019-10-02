@@ -1,21 +1,15 @@
 # Elox
 
-**TODO: Add description**
+Run
 
-## Installation
+    mix escript.build
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `elox` to your list of dependencies in `mix.exs`:
+from the root directory to build the executable.  Then run 
 
-```elixir
-def deps do
-  [
-    {:elox, "~> 0.1.0"}
-  ]
-end
-```
+    ./elox
+    
+for REPL or 
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/elox](https://hexdocs.pm/elox).
-
+    ./elox -f filename
+    
+to run a lox file
