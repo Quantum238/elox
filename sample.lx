@@ -1,2 +1,3 @@
-2+2
-var language = "lox";
+// this is a comment
+(( )) {} // some grouping
+!*+-=/<> <= == // operators
