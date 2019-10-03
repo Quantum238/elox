@@ -1,3 +1,6 @@
 // this is a comment
 (( )) {} // some grouping
 !*+-=/<> <= == // operators
+"this is a string"
+123
+123.123

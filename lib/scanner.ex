@@ -58,31 +58,31 @@ defmodule Scanner do
 	defp addToken(type) do
 		addToken(type, nil)
 	end
+
+	defp getSourceSubstring(start, end_) do
+		get(:source)
+		|> Enum.drop(start)
+		|> Enum.take(end_ - start)
+		|> Enum.join("")
+	end
+
 	defp addToken(type, literal) do
-		text = 
-			get(:source) 
-			|> Enum.drop(get(:start))
-			|> Enum.take(get(:current) - get(:start))
-			|> Enum.join("")
+		text = getSourceSubstring(get(:start), get(:current))
 		new_token = Token.init(type, text, literal, get(:line))
 		update(:tokens, get(:tokens) ++ [new_token])
 	end
 
-	defp getCurrentChar do
-		[char | _] = Enum.drop(get(:source), get(:current)) |> Enum.take(1)
+	defp getCurrentChar(offset \\ 0) do
+		[char | _] = Enum.drop(get(:source), get(:current) + offset) |> Enum.take(1)
 		char
 	end
 	defp match(expected) do
 		cond do
 			isAtEnd() -> 
-				IO.puts("11111")
 				false
 			getCurrentChar() != expected -> 
-				IO.puts("2222222222")
 				false
 			true -> 
-				IO.puts "#{get(:current)} #{getCurrentChar()}, #{expected}, #{getCurrentChar() != expected}"
-				IO.puts("33333333333")
 				update(:current, get(:current) + 1)
 				true
 		end
@@ -103,10 +103,73 @@ defmodule Scanner do
 		end
 	end
 
+	defp stringHelper do
+		IO.puts "#{peek()} #{isAtEnd()}"
+		if peek() != ~s(") and !isAtEnd() do
+			if peek() == "\n" do
+				update(:line, get(:line) + 1)
+			end
+			advance()
+			stringHelper()
+		end
+	end
+	defp string do
+
+		stringHelper()
+		# unterminated string
+		if isAtEnd() do
+			Lox.error(get(:line), "Unterminated string")
+		else
+			# eat the closing "
+			advance()
+			# trim off the surrounding "'s
+			value = getSourceSubstring(get(:start) + 1, get(:current) - 1)
+			IO.inspect value, label: "Adding the string token"
+			addToken(:STRING, value)
+		end
+	end
+
+	defp isDigit(c) do
+		IO.inspect c, label: "is digit arg"
+		case Float.parse(c) do
+			 :error -> false
+			 _ -> true
+				
+		end
+	end
+
+	defp peekNext() do
+		if get(:current) + 1 >= get(:orig_length) do
+			"\0"
+		else
+			getCurrentChar(1)
+		end
+	end
+
+	defp numberHelper() do
+		if isDigit(peek()) do
+			advance()
+			numberHelper()
+		end
+		
+	end
+	defp number() do
+
+		numberHelper()
+		# check to see if its a float
+		if peek() == "." and isDigit(peekNext())do
+			# eat the decimal point
+			advance()
+		end
+
+		numberHelper()
+		{value, _} = getSourceSubstring(get(:start), get(:current))
+			|> Float.parse
+		addToken(:NUMBER, value)
+	end
 
 	defp scanToken do
 		c = advance()
-		IO.puts "#{get(:current)} #{c}"
 		case c do
 			"(" -> addToken(:LEFT_PAREN)
 			")" -> addToken(:RIGHT_PAREN)
@@ -119,7 +182,6 @@ defmodule Scanner do
 			";" -> addToken(:SEMICOLON)
 			"*" -> addToken(:STAR)
 			"!" -> if match("=") do
-				# IO.puts(getCurrentChar())
 				addToken(:BANG_EQUAL)
 			else
 				addToken(:BANG)
@@ -127,7 +189,6 @@ defmodule Scanner do
 				# addToken(if match("="), do: :BANG_EQUAL, else: :BANG)
 			"=" -> 
 				if match("=") do
-					# IO.puts(getCurrentChar())
 					addToken(:EQUAL_EQUAL)
 				else
 					addToken(:EQUAL)
@@ -145,7 +206,13 @@ defmodule Scanner do
 			"\r" -> nil
 			"\t" -> nil
 			"\n" -> update(:line, get(:line) + 1)
-			_ -> Lox.error(get(:line), "Unexpected character.")
+			~s(") -> string()
+			_ ->
+				if isDigit(c) do
+					number()
+				else
+					Lox.error(get(:line), "Unexpected character.")
+				end
 		end
 	end
 end
