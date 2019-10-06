@@ -3,6 +3,25 @@ defmodule Scanner do
 	alias Token
 	alias Lox
 
+	@keywords %{
+		"and" => :and,
+		"class" => :and,
+		"else" => :else,
+		"false" => :false,
+		"for" => :for,
+		"fun" => :fun,
+		"if" => :if,
+		"nil" => :nil,
+		"or" => :or,
+		"print" => :print,
+		"return" => :return,
+		"super" => :super,
+		"this" => :this,
+		"true" => :true,
+		"var" => :var,
+		"while" => :while,
+	}
+
 	def init(source) do
 		split_source = String.codepoints(source)
 		Agent.start_link(fn -> %{
@@ -104,7 +123,6 @@ defmodule Scanner do
 	end
 
 	defp stringHelper do
-		IO.puts "#{peek()} #{isAtEnd()}"
 		if peek() != ~s(") and !isAtEnd() do
 			if peek() == "\n" do
 				update(:line, get(:line) + 1)
@@ -124,18 +142,37 @@ defmodule Scanner do
 			advance()
 			# trim off the surrounding "'s
 			value = getSourceSubstring(get(:start) + 1, get(:current) - 1)
-			IO.inspect value, label: "Adding the string token"
 			addToken(:STRING, value)
 		end
 	end
 
 	defp isDigit(c) do
-		IO.inspect c, label: "is digit arg"
 		case Float.parse(c) do
 			 :error -> false
 			 _ -> true
 				
 		end
+	end
+
+	defp identifierHelper do
+		if isAlphaNumeric(peek()) do
+			advance()
+			identifierHelper()
+		end
+	end
+	defp isAlpha(c) do
+		String.match?(c, ~r/[[:alpha:]]/)
+	end
+
+	defp isAlphaNumeric(c) do
+		isAlpha(c) or isDigit(c) or c=="_"
+	end
+
+	defp identifier do
+		identifierHelper()
+		token_text = getSourceSubstring(get(:start), get(:current))
+		token_type = Map.get(@keywords, token_text, :IDENTIFIER)
+		addToken(token_type)
 	end
 
 	defp peekNext() do
@@ -208,11 +245,11 @@ defmodule Scanner do
 			"\n" -> update(:line, get(:line) + 1)
 			~s(") -> string()
 			_ ->
-				if isDigit(c) do
-					number()
-				else
-					Lox.error(get(:line), "Unexpected character.")
+				cond do
+					isDigit(c) -> number()
+					isAlpha(c) -> identifier()
+					true -> Lox.error(get(:line), "Unexpected character.")
 				end
+			end
 		end
-	end
 end
