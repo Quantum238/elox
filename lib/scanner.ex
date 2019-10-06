@@ -150,7 +150,6 @@ defmodule Scanner do
 		case Float.parse(c) do
 			 :error -> false
 			 _ -> true
-				
 		end
 	end
 
