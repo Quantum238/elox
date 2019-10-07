@@ -1,6 +1,8 @@
 defmodule Elox do
   alias Scanner
   alias Lox
+  alias GrammarExpr
+  alias ASTPrinter
   @moduledoc """
   Documentation for Elox.
   """
@@ -31,6 +33,22 @@ defmodule Elox do
         Lox.init()
         runPrompt()
     end
+
+    # DELME
+    expression = GrammarExpr.binary(
+        GrammarExpr.unary(
+          Token.init(:MINUS, "-", nil, 1),
+          GrammarExpr.literal(123)
+        ),
+        Token.init(:STAR, "*", nil, 1),
+        GrammarExpr.grouping(
+          GrammarExpr.literal(45.67)
+        )
+      )
+    ASTPrinter.print(expression)
+
+
+
   end
 
 

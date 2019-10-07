@@ -1,9 +1,11 @@
 
 defmodule GrammarExpr do
 	use Agent
+	alias Visit
 
 	def init_expr(state) do
-		Agent.start_link(fn -> state end)
+		{:ok, pid} = Agent.start_link(fn -> state end)
+		pid
 	end
 
 	def get(expr, key) do
@@ -14,23 +16,27 @@ defmodule GrammarExpr do
 		Agent.update(expr, fn(self) -> Map.put(self, key, value) end)
 	end
 
+	def accept(expr, visit_func) do
+		visit_func.(expr)
+	end
+
 	def binary(left, operator, right) do
-		state = %{left: left, operator: operator, right: right}
+		state = %{left: left, operator: operator, right: right, expr_type: :binary}
 		init_expr(state)
 	end
 
 	def grouping(expression) do
-		state = %{expression: expression}
+		state = %{expression: expression, expr_type: :grouping}
 		init_expr(state)
 	end
 
 	def literal(value) do
-		state = %{value: value}
+		state = %{value: value, expr_type: :literal}
 		init_expr(state)
 	end
 
 	def unary(operator, right) do
-		state = %{operator: operator, right: right}
+		state = %{operator: operator, right: right, expr_type: :unary}
 		init_expr(state)
 	end
 end

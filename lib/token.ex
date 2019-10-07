@@ -13,6 +13,10 @@ defmodule Token do
 		pid
 	end
 
+	def get(token, key) do
+		Agent.get(token, fn(self) -> self[key] end)
+	end
+
 	def toString(pid) do
 		token_info = Agent.get(pid, fn(self) -> self end)
 		"#{token_info.type} #{token_info.lexeme} #{token_info.literal}"

@@ -8,7 +8,7 @@ defmodule Mix.Tasks.GenerateGrammar do
 		Unary: "operator, right",
 	}
 
-	def generate(file, base_name, type_map) do
+	def generate(base_name, type_map) do
 		{:ok, file} = File.open(
 			"lib/Grammar#{base_name}.ex",
 			[:write, :utf8]
@@ -17,9 +17,11 @@ defmodule Mix.Tasks.GenerateGrammar do
 		file_contents = ["
 defmodule Grammar#{base_name} do
 	use Agent
+	alias Visit
 
 	def init_#{String.downcase(base_name)}(state) do
-		Agent.start_link(fn -> state end)
+		{:ok, pid} = Agent.start_link(fn -> state end)
+		pid
 	end
 
 	def get(expr, key) do
@@ -28,6 +30,10 @@ defmodule Grammar#{base_name} do
 
 	def update(expr, key, value) do
 		Agent.update(expr, fn(self) -> Map.put(self, key, value) end)
+	end
+
+	def accept(expr, visit_func) do
+		visit_func.(expr)
 	end
 "]
 		file_contents = Enum.reduce(
@@ -38,9 +44,12 @@ defmodule Grammar#{base_name} do
 					args_in_map = String.split(args, ", ")
 					|> Enum.map(fn(arg) -> "#{arg}: #{arg}" end)
 					|> Enum.join(", ")
+					lower_case_name = Atom.to_string(class_name)
+						|> String.downcase
+					lower_case_atom_str = ":" <> lower_case_name
 				class_def = ["
-	def #{String.downcase(Atom.to_string(class_name))}(#{args}) do
-		state = %{#{args_in_map}}
+	def #{lower_case_name}(#{args}) do
+		state = %{#{args_in_map}, expr_type: #{lower_case_atom_str}}
 		init_#{String.downcase(base_name)}(state)
 	end
 "
