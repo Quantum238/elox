@@ -17,9 +17,24 @@ defmodule Lox do
   end
 
 
-
+  TODO: This needs to dispatch on args.  It can get either line as a string, 
+  in which case it needs to do the thing thats commented out
+  or it can get a token, in which case it needs to do the rest of the body
   def error(line, message) do
-    report(line, "", message)
+    # report(line, "", message)
+    if Token.get(token, :type) == :EOF do
+      report(
+        Token.get(token, :line),
+        " at end",
+        message
+      )
+    else
+      report(
+        Token.get(token, :line),
+        " at '#{Token.get(token, :lexeme)}'",
+        message
+      )
+    end
   end
 
   defp report(line, where, message) do

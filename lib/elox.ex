@@ -2,7 +2,7 @@ defmodule Elox do
   alias Scanner
   alias Lox
   alias GrammarExpr
-  alias ASTPrinter
+  alias parser
   @moduledoc """
   Documentation for Elox.
   """
@@ -46,9 +46,7 @@ defmodule Elox do
         )
       )
     ASTPrinter.print(expression)
-
-
-
+    # End DELME
   end
 
 
@@ -58,7 +56,16 @@ defmodule Elox do
     end
     Scanner.init(source)
     tokens = Scanner.scanTokens()
-    for token <- tokens, do: IO.puts Token.toString(token)
+    # for token <- tokens, do: IO.puts Token.toString(token)
+    parser.init()
+    expression = parser.parse()
+    if Lox.hadError do
+      nil
+    else
+      IO.puts(ASTPrinter.print(expression))
+    end
+
+
   end
 
   defp runFile(path) do
