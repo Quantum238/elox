@@ -1,10 +1,16 @@
-defmodule parser do
+defmodule ParseError do
+	defexception message: "I broke!"
+end
+
+defmodule Parser do
 	alias GrammarExpr
 	alias Lox
+	alias ParseError
+
 	
 	def init(tokens) do
-		Agent.start_link(
-			fn -> {
+		{:ok, pid} = Agent.start_link(
+			fn -> %{
 				tokens: tokens,
 				current: 0,
 			} end,
@@ -24,7 +30,7 @@ defmodule parser do
 	defp match(token_types) do
 		case token_types do
 			[head_token | rest] ->
-				if check(type) do
+				if check(head_token) do
 					advance()
 					true
 				end
@@ -161,6 +167,7 @@ defmodule parser do
 		right = unary()
 		if match([:SLASH, :STAR]) do
 			expr = GrammarExpr.binary(expr, operator, right)
+			multiplication_helper(expr)
 		else
 			expr
 		end
@@ -193,7 +200,7 @@ defmodule parser do
 					{:error} -> raise "ParseError"
 				end
 			error(peek(), "Expect expression.")
-			raise "Parse Error"
+			raise ParseError
 		end
 	end
 
@@ -201,7 +208,7 @@ defmodule parser do
 		try do
 			expression()
 		rescue
-			nil
+			_e in ParseError -> nil
 		end
 	end
 

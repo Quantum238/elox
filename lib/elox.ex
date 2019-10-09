@@ -2,7 +2,7 @@ defmodule Elox do
   alias Scanner
   alias Lox
   alias GrammarExpr
-  alias parser
+  alias Parser
   @moduledoc """
   Documentation for Elox.
   """
@@ -57,8 +57,8 @@ defmodule Elox do
     Scanner.init(source)
     tokens = Scanner.scanTokens()
     # for token <- tokens, do: IO.puts Token.toString(token)
-    parser.init()
-    expression = parser.parse()
+    Parser.init(tokens)
+    expression = Parser.parse()
     if Lox.hadError do
       nil
     else

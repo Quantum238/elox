@@ -17,11 +17,10 @@ defmodule Lox do
   end
 
 
-  TODO: This needs to dispatch on args.  It can get either line as a string, 
-  in which case it needs to do the thing thats commented out
-  or it can get a token, in which case it needs to do the rest of the body
-  def error(line, message) do
-    # report(line, "", message)
+  def error(line, message) when is_binary(line) do
+    report(line, "", message)
+  end
+  def error(token, message) do
     if Token.get(token, :type) == :EOF do
       report(
         Token.get(token, :line),
