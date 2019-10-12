@@ -2,7 +2,7 @@ defmodule Lox do
   use Agent
 
   def init() do
-    Agent.start_link(fn -> %{:hadError => false} end, name: __MODULE__)
+    Agent.start_link(fn -> %{hadError: false, hadRuntimeError: false} end, name: __MODULE__)
   end
 
   # reads
@@ -10,10 +10,19 @@ defmodule Lox do
     Agent.get(__MODULE__, fn(state) -> state.hadError end)
   end
 
+  def hadRuntimeError do
+    Agent.get(__MODULE__, fn(state) -> state.hadRuntimeError end)
+  end
+
   # writes
 
   def clearError do
     Agent.update(__MODULE__, fn(state) -> Map.put(state, :hadError, false) end)
+  end
+
+  def runtimeError(runtime_error) do
+      IO.puts "#{runtime_error.message} \n [line #{Token.get(runtime_error.token, :line)}]"
+      Agent.update(__MODULE__, fn(state) -> Map.put(state, :hadRuntimeError, true) end)
   end
 
 

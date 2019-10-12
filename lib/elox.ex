@@ -54,6 +54,9 @@ defmodule Elox do
     if Lox.hadError do
       System.halt(65)
     end
+    if Lox.hadRuntimeError do
+      System.halt(70)
+    end
     Scanner.init(source)
     tokens = Scanner.scanTokens()
     # for token <- tokens, do: IO.puts Token.toString(token)
@@ -63,6 +66,7 @@ defmodule Elox do
       nil
     else
       IO.puts(ASTPrinter.print(expression))
+      TODO interpret!
     end
 
 
