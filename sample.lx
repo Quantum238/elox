@@ -1,9 +1,12 @@
 // this is a comment
-(( )) {} // some grouping
-!*+-=/<> <= == // operators
-"this is a string"
-123
-123.123
-identifier
-etrytuyiu656787
-one_and_two
+//(( )) {} // some grouping
+//!*+-=/<> <= == // operators
+//"this is a string"
+//123
+//123.123
+//identifier
+//etrytuyiu656787
+//one_and_two
+//1 + 2 + 3
+//1 + 2 * 3
+(1 + 2) * 3

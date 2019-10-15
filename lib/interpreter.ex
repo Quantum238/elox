@@ -41,8 +41,7 @@ defmodule Interpreter do
 			:binary ->
 				left = evaluate(GrammarExpr.get(expr, :left))
 				right = evaluate(GrammarExpr.get(expr, :right))
-				op_type = GrammarExpr.get(expr, :operator) 
-					|> Token.get(:type)
+				op_type = GrammarExpr.get(expr, :operator)
 				case op_type do
 					:MINUS -> 
 						GrammarExpr.get(expr, :operator)
@@ -62,7 +61,7 @@ defmodule Interpreter do
 								left + right
 							is_binary(left) && is_binary(right) ->
 								left <> right
-							_ -> raise %LoxRuntimeError{
+							true -> raise %LoxRuntimeError{
 								token: GrammarExpr.get(expr, :operator),
 								message: "Operands must both be numbers or both be strings"
 							}
@@ -124,9 +123,9 @@ defmodule Interpreter do
 
 	defp isEqual(left, right) do
 		cond do
-			a == nil and b == nil -> true
-			a == nil -> false
-			true -> a == b
+			left == nil and right == nil -> true
+			left == nil -> false
+			true -> left == right
 		end
 	end
 end

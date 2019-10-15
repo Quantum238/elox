@@ -3,6 +3,7 @@ defmodule Elox do
   alias Lox
   alias GrammarExpr
   alias Parser
+  alias Interpreter
   @moduledoc """
   Documentation for Elox.
   """
@@ -59,14 +60,13 @@ defmodule Elox do
     end
     Scanner.init(source)
     tokens = Scanner.scanTokens()
-    # for token <- tokens, do: IO.puts Token.toString(token)
     Parser.init(tokens)
     expression = Parser.parse()
     if Lox.hadError do
       nil
     else
-      IO.puts(ASTPrinter.print(expression))
-      TODO interpret!
+      # IO.puts(ASTPrinter.print(expression))
+      Interpreter.interpret(expression)
     end
 
 

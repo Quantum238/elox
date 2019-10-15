@@ -26,17 +26,22 @@ defmodule Parser do
 		Agent.update(__MODULE__, fn(self) -> Map.put(self, key, val) end)
 	end
 
-
-	defp match(token_types) do
+	defp match_helper(token_types) do
 		case token_types do
 			[head_token | rest] ->
 				if check(head_token) do
 					advance()
 					true
+				else
+					match_helper(rest)
 				end
-				match(rest)
-			_ -> false
+			[] -> 
+				false
 		end
+	end
+
+	defp match(token_types) do
+		match_helper(token_types)
 	end
 
 	defp check(token_type) do
@@ -51,7 +56,7 @@ defmodule Parser do
 		if !isAtEnd() do
 			update(:current, get(:current) + 1)
 		end
-		previous()
+		previous_type()
 	end
 
 	defp isAtEnd do
@@ -65,7 +70,11 @@ defmodule Parser do
 
 	defp previous do
 		get(:tokens)
-		|> Enum.at(get(:current) - 1)
+		|> Enum.at(get(:current) - 1) 
+	end
+
+	defp previous_type do
+		previous() |> Token.get(:type)
 	end
 
 	defp consume(token_type, message) do
@@ -83,7 +92,7 @@ defmodule Parser do
 
 	defp synchronize_helper do
 		if !isAtEnd() do
-			last_was_semicolon = Token.get(previous(), :type) == :SEMICOLON
+			last_was_semicolon = previous_type() == :SEMICOLON
 			keyword_list = [
 				:CLASS,
 				:FUN,
@@ -117,9 +126,9 @@ defmodule Parser do
 
 
 	defp equality_helper(expr) do
-		operator = previous()
-		right = comparison()
 		if match([:BANG_EQUAL, :EQUAL_EQUAL]) do
+			operator = previous_type()
+			right = comparison()
 			expr = GrammarExpr.binary(expr, operator, right)
 			equality_helper(expr)
 		else
@@ -132,9 +141,9 @@ defmodule Parser do
 	end
 
 	defp comparison_helper(expr) do
-		operator = previous()
-		right = addition()
 		if match([:GREATER, :GREATER_EQUAL, :LESS, :LESS_EQUAL]) do
+			operator = previous_type()
+			right = addition()
 			expr = GrammarExpr.binary(expr, operator, right)
 			comparison_helper(expr)
 		else
@@ -148,9 +157,9 @@ defmodule Parser do
 	end
 
 	defp addition_helper(expr) do
-		operator = previous()
-		right = multiplication()
 		if match([:MINUS, :PLUS]) do
+			operator = previous_type()
+			right = multiplication()
 			expr = GrammarExpr.binary(expr, operator, right)
 			addition_helper(expr)
 		else
@@ -163,13 +172,15 @@ defmodule Parser do
 	end
 
 	defp multiplication_helper(expr) do
-		operator = previous()
-		right = unary()
+
 		if match([:SLASH, :STAR]) do
+			operator = previous_type()
+			right = unary()
 			expr = GrammarExpr.binary(expr, operator, right)
 			multiplication_helper(expr)
 		else
 			expr
+
 		end
 	end
 	defp multiplication do
@@ -179,7 +190,7 @@ defmodule Parser do
 
 	defp unary do
 		if match([:BANG, :MINUS]) do
-			operator = previous()
+			operator = previous_type()
 			right = unary()
 			GrammarExpr.unary(operator, right)
 		else
@@ -192,15 +203,17 @@ defmodule Parser do
 			match([:FALSE]) -> GrammarExpr.literal(false)
 			match([:TRUE]) -> GrammarExpr.literal(true)
 			match([:NIL]) -> GrammarExpr.literal(nil)
-			match([:NUMBER, :STRING]) -> GrammarExpr.literal(Token.get(previous(), :literal))
+			match([:NUMBER, :STRING]) -> 
+				GrammarExpr.literal(Token.get(previous(), :literal))
 			match([:LEFT_PAREN]) ->
 				expr = expression()
 				case consume(:RIGHT_PAREN, "Expect ')' after expression.") do
 					{:ok, _} -> GrammarExpr.grouping(expr)
 					{:error} -> raise "ParseError"
 				end
-			error(peek(), "Expect expression.")
-			raise ParseError
+			true ->
+				error(peek(), "Expect expression.")
+				raise ParseError
 		end
 	end
 
